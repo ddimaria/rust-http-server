@@ -2,7 +2,6 @@ use std::io::prelude::*;
 use std::net::TcpStream;
 
 use crate::headers::Headers;
-use crate::storage::StorageData;
 
 const LINE_BREAK: &str = "\r\n";
 const EMPTY: String = String::new();
@@ -22,9 +21,9 @@ pub fn respond(
     mut stream: TcpStream,
     status: HttpStatusCode,
     headers: Option<Headers>,
-    storage_data: Option<StorageData>,
+    body: Option<String>,
 ) {
-    let response = build_response(status, headers, storage_data);
+    let response = build_response(status, headers, body);
     // make this a closure so that it's only invoked for error cases
     let internal_server_error = || build_response(HttpStatusCode::ServerError, None, None);
 
@@ -41,11 +40,11 @@ pub fn respond(
 fn build_response(
     status: HttpStatusCode,
     headers: Option<Headers>,
-    storage_data: Option<StorageData>,
+    body: Option<String>,
 ) -> String {
     let first_line = build_first_line(status);
     let headers = build_headers(headers).unwrap_or(EMPTY);
-    let body = build_response_body(storage_data).unwrap_or(EMPTY);
+    let body = build_response_body(body).unwrap_or(EMPTY);
     let response = first_line + &headers + &body;
 
     info!("RESPONSE: {:?}", response);
@@ -80,13 +79,10 @@ fn build_headers(headers: Option<Headers>) -> Option<String> {
 
 // Build the response body portion string.
 // Include Content-Type and Content-Length.
-fn build_response_body(storage_data: Option<StorageData>) -> Option<String> {
-    if let Some(storage_data) = storage_data {
-        let body = storage_data.body.unwrap_or(EMPTY);
+fn build_response_body(body: Option<String>) -> Option<String> {
+    if let Some(body) = body {
         return Some(format!(
-            "Content-Type: {}{}Content-Length: {}{}{}{}{}",
-            storage_data.content_type,
-            LINE_BREAK,
+            "Content-Length: {}{}{}{}{}",
             body.len(),
             LINE_BREAK,
             LINE_BREAK,
@@ -101,14 +97,6 @@ fn build_response_body(storage_data: Option<StorageData>) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn get_storage_data(body: String) -> StorageData {
-        StorageData {
-            body: Some(body.clone()),
-            content_type: "application/json".into(),
-            content_length: body.len(),
-        }
-    }
 
     #[test]
     fn test_build_response() {
@@ -138,11 +126,11 @@ mod tests {
 
     #[test]
     fn test_build_response_body() {
-        let response_body = get_storage_data("body".into());
+        let response_body = "body".to_string();
         let response = build_response_body(Some(response_body)).unwrap();
         assert_eq!(
             response,
-            "Content-Type: application/json\r\nContent-Length: 4\r\n\r\nbody\r\n"
+            "Content-Length: 4\r\n\r\nbody\r\n"
         );
     }
 

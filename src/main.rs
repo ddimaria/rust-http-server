@@ -10,12 +10,12 @@ use std::io::Result;
 use crate::server::server;
 
 mod config;
+mod data;
 mod handlers;
 mod headers;
 mod request;
 mod response;
 mod server;
-mod storage;
 mod threadpool;
 
 fn main() -> Result<()> {

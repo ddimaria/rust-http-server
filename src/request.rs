@@ -127,7 +127,7 @@ impl Request {
             .split("&")
             .for_each(|x| {
                 let pair = x.split("=").collect::<Vec<&str>>();                
-                if (pair.len() == 2) {
+                if pair.len() == 2 {
                     hashmap.insert(pair[0].into(), pair[1].into());
                 }
             });

@@ -5,7 +5,7 @@ use std::sync::{Arc, RwLock};
 use crate::config::CONFIG;
 use crate::handlers::{delete, get, post};
 use crate::request::{Method, Request};
-use crate::storage::Storage;
+use crate::data::Data;
 use crate::threadpool::ThreadPool;
 
 // Starts the server.
@@ -19,16 +19,18 @@ pub fn server() -> Result<TcpListener> {
     // Keep the threadpool at 4, but can be increased.
     let pool = ThreadPool::new(4);
 
-    // Share ownership of storage and user a reader-writer lock.
+    // Share ownership of data and user a reader-writer lock.
     // Allows multiple readers and a single writer.
-    let storage = Arc::new(RwLock::new(Storage::new()));
+    let mut data_inner = Data::new();
+    data_inner.insert("first".into(), "TEMP DATA TO STORE");
+    let data = Arc::new(RwLock::new(data_inner));
 
     info!("Starting server at {}", CONFIG.server);
 
     // Read in the streams into an iterator.
     for stream in listener.incoming() {
         // Get a new Arc instance
-        let storage = Arc::clone(&storage);
+        let data = Arc::clone(&data);
 
         // Spawn a new thread in the threadpool
         pool.execute(|| {
@@ -37,9 +39,9 @@ pub fn server() -> Result<TcpListener> {
 
             // Handle routing
             match request.method {
-                Method::Delete => delete(request, storage),
-                Method::Get => get(request, storage),
-                Method::Post => post(request, storage),
+                Method::Delete => delete(request, data),
+                Method::Get => get(request, data),
+                Method::Post => post(request, data),
             }
         });
     }

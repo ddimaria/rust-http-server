@@ -2,22 +2,22 @@ use std::sync::{Arc, RwLock};
 
 use crate::request::Request;
 use crate::response::{respond, HttpStatusCode};
-use crate::storage::{Storage};
+use crate::data::Data;
 
 // Handle GET requests.
-pub fn get(request: Request, storage: Arc<RwLock<Storage>>) {
-    // let storage = storage.read().expect("RwLock read poisoned");
+pub fn get<T>(request: Request, data: Arc<RwLock<Data<T>>>) {
+    // let data = data.read().expect("RwLock read poisoned");
     respond(request.stream, HttpStatusCode::OK, None, None);
 }
 
 // Handle POST requests.
-pub fn post(request: Request, storage: Arc<RwLock<Storage>>) {
-    // let mut storage = storage.write().expect("RwLock write poisoned");
+pub fn post<T>(request: Request, data: Arc<RwLock<Data<T>>>) {
+    // let mut data = data.write().expect("RwLock write poisoned");
     respond(request.stream, HttpStatusCode::OK, None, None);
 }
 
 // Handle DELETE requests.
-pub fn delete(request: Request, storage: Arc<RwLock<Storage>>) {
-    // let mut storage = storage.write().expect("RwLock write poisoned");
+pub fn delete<T>(request: Request, data: Arc<RwLock<Data<T>>>) {
+    // let mut data = data.write().expect("RwLock write poisoned");
     respond(request.stream, HttpStatusCode::OK, None, None);
 }
