@@ -1,0 +1,14 @@
+[package]
+name = "rust-http-server"
+version = "0.1.0"
+authors = ["David DiMaria <david.p.dimaria@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+dotenv = "0.14"
+envy = "0.4"
+env_logger = "0.7.1"
+lazy_static = "1.4"
+log = "0.4"
+serde = "1.0"
+serde_derive = "1.0"
