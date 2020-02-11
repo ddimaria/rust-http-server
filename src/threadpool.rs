@@ -3,14 +3,18 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::thread;
 
+enum Message {
+    NewJob(Job),
+    Terminate,
+}
+
 pub struct ThreadPool {
-    #[allow(dead_code)]
     workers: Vec<Worker>,
     sender: mpsc::Sender<Message>,
 }
 
 // Type alias to hold the clojure type for the execute() method
-type Message = Box<dyn FnOnce() + Send + 'static>;
+type Job = Box<dyn FnOnce() + Send + 'static>;
 
 impl ThreadPool {
     pub fn new(size: usize) -> ThreadPool {
@@ -33,13 +37,32 @@ impl ThreadPool {
         ThreadPool { workers, sender }
     }
 
-    // Create a new Message instance
+    // Create a new Job instance
     pub fn execute<F>(&self, f: F)
     where
         F: FnOnce() + Send + 'static,
     {
-        let message = Box::new(f);
-        self.sender.send(message).expect("Send could not send message.");
+        let job = Box::new(f);
+        self.sender
+            .send(Message::NewJob(job))
+            .expect("Sender could not send message to workers");
+    }
+}
+
+// Deal with thread pools when they go out of scope
+impl Drop for ThreadPool {
+    fn drop(&mut self) {
+        // Tell all workers to terminate
+        for _ in &mut self.workers {
+            self.sender.send(Message::Terminate).unwrap();
+        }
+
+        // Join threads together
+        for worker in &mut self.workers {
+            if let Some(thread) = worker.thread.take() {
+                thread.join().unwrap();
+            }
+        }
     }
 }
 
@@ -58,10 +81,14 @@ impl Worker {
             // then send the message.
             let message = receiver
                 .lock()
-                .expect("Receiver mutex poisoned.")
+                .expect("Receiver mutex poisoned")
                 .recv()
-                .expect("Receiver could not send message.");
-            message()
+                .expect("Receiver could not send job");
+
+            match message {
+                Message::NewJob(job) => job(),
+                Message::Terminate => break,
+            }
         });
 
         Worker {
