@@ -1,8 +1,8 @@
 use std::sync::{Arc, RwLock};
 
+use crate::data::Data;
 use crate::request::Request;
 use crate::response::{respond, HttpStatusCode};
-use crate::data::Data;
 
 // Handle GET requests.
 pub fn get<T>(request: Request, data: Arc<RwLock<Data<T>>>) {

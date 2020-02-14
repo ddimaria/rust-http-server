@@ -80,7 +80,9 @@ impl Request {
     // Ignore http version for now, we're assuming 1.1.
     // Improvement: Respond with a 400 for versions other than 1.1.
     // Improvement: Accept different http versions.
-    fn parse_first_line(first_line: Option<&str>) -> (Method, String, Option<HashMap<String, String>>) {
+    fn parse_first_line(
+        first_line: Option<&str>,
+    ) -> (Method, String, Option<HashMap<String, String>>) {
         let mut split = first_line.unwrap_or("GET /").split_whitespace();
         let method = Request::parse_method(split.next());
         let (uri, query) = Request::parse_uri(split.next());
@@ -122,15 +124,12 @@ impl Request {
     // Parse the query string portion of the URI
     fn parse_query(query: &str) -> Option<HashMap<String, String>> {
         let mut hashmap: HashMap<String, String> = HashMap::new();
-        let items = query
-            .to_string()
-            .split("&")
-            .for_each(|x| {
-                let pair = x.split("=").collect::<Vec<&str>>();                
-                if pair.len() == 2 {
-                    hashmap.insert(pair[0].into(), pair[1].into());
-                }
-            });
+        let items = query.to_string().split("&").for_each(|x| {
+            let pair = x.split("=").collect::<Vec<&str>>();
+            if pair.len() == 2 {
+                hashmap.insert(pair[0].into(), pair[1].into());
+            }
+        });
 
         Some(hashmap)
     }

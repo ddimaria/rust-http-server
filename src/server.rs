@@ -3,9 +3,9 @@ use std::net::TcpListener;
 use std::sync::{Arc, RwLock};
 
 use crate::config::CONFIG;
+use crate::data::Data;
 use crate::handlers::{delete, get, post};
 use crate::request::{Method, Request};
-use crate::data::Data;
 use crate::threadpool::ThreadPool;
 
 // Starts the server.

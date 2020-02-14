@@ -1,7 +1,9 @@
+use crate::config::CONFIG;
+use crate::headers::Headers;
+use flate2::write::GzEncoder;
+use flate2::Compression;
 use std::io::prelude::*;
 use std::net::TcpStream;
-
-use crate::headers::Headers;
 
 const LINE_BREAK: &str = "\r\n";
 const EMPTY: String = String::new();
@@ -28,9 +30,16 @@ pub fn respond(
     let internal_server_error = || build_response(HttpStatusCode::ServerError, None, None);
 
     // Write the response to the TcpStream
-    let _write = stream
-        .write(response.as_bytes())
-        .map_err(|_| internal_server_error());
+    if CONFIG.gzip_response {
+        let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+        let _write = encoder
+            .write_all(response.as_bytes())
+            .map_err(|_| internal_server_error());
+    } else {
+        let _write = stream
+            .write(response.as_bytes())
+            .map_err(|_| internal_server_error());
+    }
 
     // Flush the TcpStream
     let _flush = stream.flush().map_err(|_| internal_server_error());
@@ -128,10 +137,7 @@ mod tests {
     fn test_build_response_body() {
         let response_body = "body".to_string();
         let response = build_response_body(Some(response_body)).unwrap();
-        assert_eq!(
-            response,
-            "Content-Length: 4\r\n\r\nbody\r\n"
-        );
+        assert_eq!(response, "Content-Length: 4\r\n\r\nbody\r\n");
     }
 
     #[test]

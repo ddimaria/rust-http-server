@@ -2,6 +2,7 @@ use dotenv::dotenv;
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct Config {
+    pub gzip_response: bool,
     pub server: String,
 }
 
